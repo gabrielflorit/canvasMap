@@ -1,0 +1,9 @@
+.themap {
+	border: solid red 1px;
+	position: relative;
+}
+
+.themap canvas {
+	display: block;
+}
+
