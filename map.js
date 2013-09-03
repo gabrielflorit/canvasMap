@@ -117,7 +117,7 @@ function themap(options) {
 		return color;
 	}
 
-	interactionCanvas.addEventListener('mousemove', function(e) {
+	function interact(e) {
 		e = e || window.event;
 
 		var target = e.target || e.srcElement,
@@ -145,8 +145,13 @@ function themap(options) {
 		path.context(ctx)(feature);
 
 		ctx.stroke();
+	}
 
-	});
+	interactionCanvas.addEventListener('touchstart', interact);
+
+	interactionCanvas.addEventListener('touchmove', interact);
+
+	interactionCanvas.addEventListener('mousemove', interact);
 
 	console.log(Date.now() - before);
 
