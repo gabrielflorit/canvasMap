@@ -1,11 +1,29 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Project</title>
-        <link rel='stylesheet' type='text/css' href='style.css' />
-    </head>
-    <body>
-    	project
-        <script src='main.js'></script>
-    </body>
+	<head>
+		<title>Project</title>
+		<link rel='stylesheet' type='text/css' href='style.css' />
+	</head>
+	<body>
+		<div id='container'></div>
+
+		<script src='vendor/d3.min.js'></script>
+		<script src='vendor/topojson.min.js'></script>
+
+		<script src='data/blocks.geojson'></script>
+
+		<script src='map.js'></script>
+		<script>
+
+			// create a map, place it in container
+			// feed it:
+			// 		- the data
+			//		- the dom element
+			map({
+				container: document.getElementById('container'),
+				geojson: blocks
+			});
+
+		</script>
+	</body>
 </html>
