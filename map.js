@@ -1,10 +1,7 @@
 function themap(options) {
 
-	var before = Date.now();
-
-	function numberToHex(num) {
-		var hex = ('000000' + num.toString(16)).slice(-6);
-		return '#' + hex;
+	function randomColor() {
+		return '#'+ ('000000' + (Math.random()*0xFFFFFF<<0).toString(16)).slice(-6);
 	}
 
 	function rgbToHex(r, g, b) {
@@ -18,48 +15,64 @@ function themap(options) {
 	var container = options.container;
 	container.className = 'themap';
 
+	var boundingClientRect = container.getBoundingClientRect();
+	var containerWidth = boundingClientRect.width;
+	var containerHeight = boundingClientRect.height;
+
 	var path = d3.geo.path().projection(null);
 	var bounds = path.bounds(geojson);
-	var width = Math.ceil(bounds[1][0]);
-	var height = Math.ceil(bounds[1][1]);
+	var originalWidth = options.originalWidth;
+	var originalHeight = options.originalHeight;
+	var ratio = originalHeight/originalWidth;
 
-	var features = geojson.features;
+	var features = geojson.features.filter(options.filter);
 
+	var baseCanvas;
+	var baseCanvasShadow;
 	function createBaseCanvas() {
-		var canvas = document.createElement('canvas');
-		canvas.className = 'base';
-		canvas.width = width;
-		canvas.height = height;
-		container.appendChild(canvas);
-		var ctx = canvas.getContext('2d');
+		baseCanvasShadow = document.createElement('canvas');
+		baseCanvasShadow.width = originalWidth;
+		baseCanvasShadow.height = originalHeight;
+		var ctxShadow = baseCanvasShadow.getContext('2d');
 
 		features.forEach(function(value, index) {
 
-			var color = numberToHex(index);
+			var color = options.color(value);
 
-			ctx.fillStyle = color;
-			ctx.strokeStyle = color;
+			ctxShadow.fillStyle = color;
+			ctxShadow.strokeStyle = color;
 
-			ctx.beginPath();
-			path.context(ctx)(value);
-			ctx.fill();
-			ctx.stroke();
+			ctxShadow.beginPath();
+			path.context(ctxShadow)(value);
+			ctxShadow.fill();
+			ctxShadow.stroke();
 
 		});
 
-		return canvas;
+		baseCanvas = document.createElement('canvas');
+		baseCanvas.className = 'base';
+		container.appendChild(baseCanvas);
 	}
 
-	var baseCanvas = createBaseCanvas();
+	function drawBaseCanvas(width) {
+		var height = ratio * width;
 
-	var dictionary = {};
+		baseCanvas.width = width;
+		baseCanvas.height = height;
+		var ctx = baseCanvas.getContext('2d');
+		ctx.clearRect(0, 0, width, height);
+		ctx.drawImage(baseCanvasShadow, 0, 0, width, height);
+	}
 
+	var dictionary;
+	var dictionaryCanvas;
 	function createDictionaryCanvas() {
-		var canvas = document.createElement('canvas');
-		canvas.width = width;
-		canvas.height = height;
-		var ctx = canvas.getContext('2d');
+		dictionaryCanvas = document.createElement('canvas');
+		dictionaryCanvas.width = originalWidth;
+		dictionaryCanvas.height = originalHeight;
+		var ctx = dictionaryCanvas.getContext('2d');
 
+		dictionary = {};
 		features.forEach(function(value, index) {
 
 			var id = value.id;
@@ -67,7 +80,7 @@ function themap(options) {
 			var color;
 
 			while(true) {
-				color = '#' + Math.floor(Math.random()*16777215).toString(16);
+				color = randomColor();
 				if (!(color in dictionary)) {
 					break;
 				}
@@ -85,33 +98,35 @@ function themap(options) {
 			ctx.fillStyle = color;
 
 			// TODO: don't fill rect - only fill the necessary rectangle
-			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			ctx.fillRect(0, 0, originalWidth, originalHeight);
 
 			ctx.restore();
 
 		});
-
-		return canvas;
 	}
 
-	var dictionaryCanvas = createDictionaryCanvas();
-
+	var interactionCanvas;
 	function createInteractionCanvas() {
-		var canvas = document.createElement('canvas');
-		canvas.className = 'interaction';
-		canvas.width = width;
-		canvas.height = height;
-		container.appendChild(canvas);
-		var ctx = canvas.getContext('2d');
-
-		return canvas;
+		interactionCanvas = document.createElement('canvas');
+		interactionCanvas.className = 'interaction';
+		container.appendChild(interactionCanvas);
+		interactionCanvas.addEventListener('touchstart', interact);
+		interactionCanvas.addEventListener('touchmove', interact);
+		interactionCanvas.addEventListener('mousemove', interact);
 	}
 
-	var interactionCanvas = createInteractionCanvas();
+	function drawInteractionCanvas(width) {
+		var height = ratio * width;
+		interactionCanvas.width = width;
+		interactionCanvas.height = height;
+	}
 
-	function getPixelDataFromInteractionCanvas(x, y) {
+	function getPixelDataFromDictionaryCanvas(_x, _y, sourceCanvas) {
 
 		var ctx = dictionaryCanvas.getContext('2d');
+		var x = _x * originalWidth/sourceCanvas.width;
+		var y = _y * originalHeight/sourceCanvas.height;
+
 		var pixel = ctx.getImageData(x, y, 1, 1).data;
 		var color = '#' + ('000000' + rgbToHex(pixel[0], pixel[0 + 1], pixel[0 + 2])).slice(-6);
 		return color;
@@ -120,39 +135,85 @@ function themap(options) {
 	function interact(e) {
 		e = e || window.event;
 
-		var target = e.target || e.srcElement,
-		rect = target.getBoundingClientRect(),
-		offsetX = e.clientX - rect.left,
-		offsetY = e.clientY - rect.top;
+		var target = e.target || e.srcElement;
+		var rect = target.getBoundingClientRect();
+		var clientX = e.clientX || e.touches[0].clientX;
+		var clientY = e.clientY || e.touches[0].clientY;
+		var offsetX = clientX - rect.left;
+		var offsetY = clientY - rect.top;
 
-		var color = getPixelDataFromInteractionCanvas(offsetX, offsetY);
+		var color = getPixelDataFromDictionaryCanvas(offsetX, offsetY, target);
 
-		// TODO: what if there is no match?
 		var id = dictionary[color];
 
-		var ctx = target.getContext('2d');
-		ctx.clearRect(0, 0, target.width, target.height);
-		ctx.strokeStyle = 'red';
-		ctx.lineWidth = 4;
+		if (id) {
+			e.preventDefault();
+			var ctx = target.getContext('2d');
+			ctx.save();
 
-		ctx.beginPath();
+			ctx.clearRect(0, 0, target.width, target.height);
+			ctx.scale(target.width/originalWidth, target.height/originalHeight);
+			ctx.strokeStyle = options.highlightColor;
+			ctx.fillStyle = options.highlightColor;
+			ctx.lineWidth = 1;
 
-		// TODO: what if there are more than one features?
-		var feature = features.filter(function(value, index) {
-			return value.id === id;
-		})[0];
+			ctx.beginPath();
 
-		path.context(ctx)(feature);
+			// TODO: what if there is more than one feature?
+			var feature = features.filter(function(value, index) {
+				return value.id === id;
+			})[0];
 
-		ctx.stroke();
+			path.context(ctx)(feature);
+
+			ctx.stroke();
+			ctx.fill();
+			ctx.restore();
+
+			// var popupPosition = {
+			// 	x: Math.floor(offsetX) + 0.5,
+			// 	y: Math.floor(offsetY) + 0.5
+			// }
+
+			// ctx.beginPath();
+			// ctx.rect(popupPosition.x, popupPosition.y, 100, 100);
+			// ctx.fillStyle = '#FFFFFF';
+			// ctx.fill();
+			// ctx.lineWidth = 1;
+			// ctx.strokeStyle = '#000000';
+			// ctx.stroke();
+			// ctx.font = '2em "Benton Sans Bold", Helvetica, Arial, sans-serif';
+			// ctx.fillStyle = '#000000';
+			// ctx.fillText('hey', popupPosition.x, popupPosition.y);
+
+
+		}
+
 	}
 
-	interactionCanvas.addEventListener('touchstart', interact);
+	container.style.height = '100000px';
 
-	interactionCanvas.addEventListener('touchmove', interact);
+	// create canvases
+	function create(width) {
+		createBaseCanvas();
+		createDictionaryCanvas();
+		createInteractionCanvas();
+	}
+	create(container.getBoundingClientRect().width);
 
-	interactionCanvas.addEventListener('mousemove', interact);
+	// draw canvases
+	function draw(width) {
+		drawBaseCanvas(width);
+		drawInteractionCanvas(width);
+	}
 
-	console.log(Date.now() - before);
+	function resize() {
+		draw(Math.floor(container.getBoundingClientRect().width));
+	}
+
+	window.addEventListener('resize', debounce(resize, 150));
+
+	resize();
+	container.style.height = 'auto';
 
 }
