@@ -170,23 +170,6 @@ function themap(options) {
 			ctx.fill();
 			ctx.restore();
 
-			// var popupPosition = {
-			// 	x: Math.floor(offsetX) + 0.5,
-			// 	y: Math.floor(offsetY) + 0.5
-			// }
-
-			// ctx.beginPath();
-			// ctx.rect(popupPosition.x, popupPosition.y, 100, 100);
-			// ctx.fillStyle = '#FFFFFF';
-			// ctx.fill();
-			// ctx.lineWidth = 1;
-			// ctx.strokeStyle = '#000000';
-			// ctx.stroke();
-			// ctx.font = '2em "Benton Sans Bold", Helvetica, Arial, sans-serif';
-			// ctx.fillStyle = '#000000';
-			// ctx.fillText('hey', popupPosition.x, popupPosition.y);
-
-
 		}
 
 	}

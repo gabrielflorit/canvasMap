@@ -1,5 +1,6 @@
 .themap {
-	border: solid red 1px;
+	margin: 0;
+	padding: 0;
 	position: relative;
 }
 

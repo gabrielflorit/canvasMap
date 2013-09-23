@@ -11,48 +11,50 @@
 		<script src='vendor/topojson.min.js'></script>
 		<script src='vendor/debounce.min.js'></script>
 
-		<script src='data/blocks.js'></script>
-
 		<script src='map.js'></script>
+
+		<script src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js'></script>
+
 		<script>
 
 			// create a map, place it in container
 			// feed it:
 			// 		- the projected geojson
 			//		- the dom element
-			var geojson = topojson.feature(blocks_topojson, blocks_topojson.objects.blocks);
 
-			var path = d3.geo.path().projection(null);
-			var bounds = path.bounds(geojson);
-			var originalWidth = Math.ceil(bounds[1][0]);
-			var originalHeight = Math.ceil(bounds[1][1]);
+			$.getJSON('data/blocks.topojson', function(json) {
 
-			themap({
-				originalWidth: originalWidth,
-				originalHeight: originalHeight,
-				container: document.getElementById('container'),
-				geojson: geojson,
-				filter: function(feature) {
-					return true;
-					// return feature.properties[candidate.id] != null;
-				},
-				color: function(feature) {
-					return 'red';
-					// var value = feature.properties[candidate.id];
-					// if (value >= 10000) {
-					// 	return '#993404';
-					// }
-					// if (value >= 1000) {
-					// 	return '#d95f0e';
-					// }
-					// if (value >= 100) {
-					// 	return '#fe9929';
-					// }
-					// if (value >= 10) {
-					// 	return '#fed98e';
-					// }
-				},
-				highlightColor: '#173368'
+				var geojson = topojson.feature(json, json.objects.blocks);
+
+				var path = d3.geo.path().projection(null);
+				var bounds = path.bounds(geojson);
+				var originalWidth = Math.ceil(bounds[1][0]);
+				var originalHeight = Math.ceil(bounds[1][1]);
+
+				var extent = d3.extent(geojson.features, function(d) {
+
+					return d.properties.population;
+				});
+
+				var scale = d3.scale.linear()
+					.domain(extent)
+					.range(['#FFF', '#000'])
+					.interpolate(d3.interpolateLab);
+
+				themap({
+					originalWidth: originalWidth,
+					originalHeight: originalHeight,
+					container: document.getElementById('container'),
+					geojson: geojson,
+					filter: function(feature) {
+						return true;
+					},
+					color: function(feature) {
+						return scale(feature.properties.population);
+					},
+					highlightColor: '#173368'
+				});
+
 			});
 
 		</script>
