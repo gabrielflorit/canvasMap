@@ -11,7 +11,8 @@ function canvasMap(options) {
 		return ((r << 16) | (g << 8) | b).toString(16);
 	}
 
-	var geojson = options.geojson;
+	var geojson = topojson.feature(options.topodata, options.topodata.objects[options.topokey]);
+
 	var container = options.container;
 	container.className = container.className + ' ' +  'canvasMap';
 
@@ -21,11 +22,42 @@ function canvasMap(options) {
 
 	var path = d3.geo.path().projection(null);
 	var bounds = path.bounds(geojson);
-	var originalWidth = options.originalWidth;
-	var originalHeight = options.originalHeight;
+	var originalWidth = Math.ceil(bounds[1][0]);
+	var originalHeight = Math.ceil(bounds[1][1]);
 	var ratio = originalHeight/originalWidth;
 
 	var features = geojson.features.filter(options.filter);
+
+	// create svg outline
+	var outline;
+	function createOutline() {
+
+		outline = d3.select(container).append('svg')
+			.attr({
+				width: originalWidth,
+				height: originalHeight,
+				viewBox: '0 0 ' + originalWidth + ' ' + originalHeight,
+				preserveAspectRatio: 'xMidYMid'
+			});
+
+		var mesh = topojson.mesh(options.topodata, options.topodata.objects[options.topokey], function(a, b) {
+			return a === b;
+		});
+
+		path = d3.geo.path().projection(null);
+		outline.append('path')
+			.datum(mesh)
+			.attr('d', path);
+	}
+
+	var extent = d3.extent(geojson.features, function(d) {
+		return d.properties[options.featureKey];
+	});
+
+	var scale = d3.scale.linear()
+		.domain(extent)
+		.range([options.minColor, options.maxColor])
+		.interpolate(d3.interpolateLab);
 
 	var baseCanvas;
 	var baseCanvasShadow;
@@ -37,7 +69,7 @@ function canvasMap(options) {
 
 		features.forEach(function(value, index) {
 
-			var color = options.color(value);
+			var color = scale(value.properties[options.featureKey]);
 
 			ctxShadow.fillStyle = color;
 			ctxShadow.strokeStyle = color;
@@ -180,13 +212,14 @@ function canvasMap(options) {
 
 	container.style.height = '100000px';
 
-	// create canvases
-	function create(width) {
+	// create canvases and svg outline
+	function create() {
+		createOutline();
 		createBaseCanvas();
 		createDictionaryCanvas();
 		createInteractionCanvas();
 	}
-	create(container.getBoundingClientRect().width);
+	create();
 
 	// draw canvases
 	function draw(width) {
@@ -195,7 +228,13 @@ function canvasMap(options) {
 	}
 
 	function resize() {
-		draw(Math.floor(container.getBoundingClientRect().width));
+		var targetWidth = Math.floor(container.getBoundingClientRect().width);
+		draw(targetWidth);
+
+		outline.attr({
+			width: targetWidth,
+			height: targetWidth / (originalWidth/originalHeight)
+		});
 	}
 
 	window.addEventListener('resize', debounce(resize, 150));

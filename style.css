@@ -13,3 +13,14 @@
 	top: 0;
 	left: 0;
 }
+
+.canvasMap svg {
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
+.canvasMap svg path {
+	fill: none;
+	stroke: #000;
+}

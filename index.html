@@ -17,41 +17,18 @@
 
 		<script>
 
-			// create a map, place it in container
-			// feed it:
-			// 		- the projected geojson
-			//		- the dom element
-
 			$.getJSON('data/blocks.topojson', function(json) {
 
-				var geojson = topojson.feature(json, json.objects.blocks);
-
-				var path = d3.geo.path().projection(null);
-				var bounds = path.bounds(geojson);
-				var width = Math.ceil(bounds[1][0]);
-				var height = Math.ceil(bounds[1][1]);
-
-				var extent = d3.extent(geojson.features, function(d) {
-
-					return d.properties.population;
-				});
-
-				var scale = d3.scale.linear()
-					.domain(extent)
-					.range(['#FFF', '#000'])
-					.interpolate(d3.interpolateLab);
-
 				canvasMap({
-					originalWidth: width,
-					originalHeight: height,
 					container: document.getElementById('container'),
-					geojson: geojson,
+					topodata: json,
+					topokey: 'blocks',
+					featureKey: 'population',
 					filter: function(feature) {
 						return true;
 					},
-					color: function(feature) {
-						return scale(feature.properties.population);
-					},
+					minColor: '#FFF',
+					maxColor: '#000',
 					highlightColor: '#173368'
 				});
 
