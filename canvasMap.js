@@ -13,7 +13,7 @@ function canvasMap(options) {
 
 	var geojson = options.geojson;
 	var container = options.container;
-	container.className = 'canvasMap';
+	container.className = container.className + ' ' +  'canvasMap';
 
 	var boundingClientRect = container.getBoundingClientRect();
 	var containerWidth = boundingClientRect.width;
@@ -110,9 +110,12 @@ function canvasMap(options) {
 		interactionCanvas = document.createElement('canvas');
 		interactionCanvas.className = 'interaction';
 		container.appendChild(interactionCanvas);
-		interactionCanvas.addEventListener('touchstart', interact);
-		interactionCanvas.addEventListener('touchmove', interact);
-		interactionCanvas.addEventListener('mousemove', interact);
+
+		if (!options.noInteraction) {
+			interactionCanvas.addEventListener('touchstart', interact);
+			interactionCanvas.addEventListener('touchmove', interact);
+			interactionCanvas.addEventListener('mousemove', interact);
+		}
 	}
 
 	function drawInteractionCanvas(width) {
@@ -170,6 +173,7 @@ function canvasMap(options) {
 			ctx.fill();
 			ctx.restore();
 
+			options.drawDetails && options.drawDetails(feature, ctx, offsetX, offsetY);
 		}
 
 	}
