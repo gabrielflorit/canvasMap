@@ -1,4 +1,4 @@
-function themap(options) {
+function canvasMap(options) {
 
 	function randomColor() {
 		return '#'+ ('000000' + (Math.random()*0xFFFFFF<<0).toString(16)).slice(-6);
@@ -13,7 +13,7 @@ function themap(options) {
 
 	var geojson = options.geojson;
 	var container = options.container;
-	container.className = 'themap';
+	container.className = 'canvasMap';
 
 	var boundingClientRect = container.getBoundingClientRect();
 	var containerWidth = boundingClientRect.width;

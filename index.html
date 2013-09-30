@@ -11,7 +11,7 @@
 		<script src='vendor/topojson.min.js'></script>
 		<script src='vendor/debounce.min.js'></script>
 
-		<script src='map.js'></script>
+		<script src='canvasMap.js'></script>
 
 		<script src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js'></script>
 
@@ -28,8 +28,8 @@
 
 				var path = d3.geo.path().projection(null);
 				var bounds = path.bounds(geojson);
-				var originalWidth = Math.ceil(bounds[1][0]);
-				var originalHeight = Math.ceil(bounds[1][1]);
+				var width = Math.ceil(bounds[1][0]);
+				var height = Math.ceil(bounds[1][1]);
 
 				var extent = d3.extent(geojson.features, function(d) {
 
@@ -41,9 +41,9 @@
 					.range(['#FFF', '#000'])
 					.interpolate(d3.interpolateLab);
 
-				themap({
-					originalWidth: originalWidth,
-					originalHeight: originalHeight,
+				canvasMap({
+					originalWidth: width,
+					originalHeight: height,
 					container: document.getElementById('container'),
 					geojson: geojson,
 					filter: function(feature) {

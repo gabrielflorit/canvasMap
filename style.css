@@ -1,14 +1,14 @@
-.themap {
+.canvasMap {
 	margin: 0;
 	padding: 0;
 	position: relative;
 }
 
-.themap canvas {
+.canvasMap canvas {
 	display: block;
 }
 
-.themap canvas.interaction {
+.canvasMap canvas.interaction {
 	position: absolute;
 	top: 0;
 	left: 0;
