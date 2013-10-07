@@ -69,7 +69,10 @@ function canvasMap(options) {
 
 		features.forEach(function(value, index) {
 
-			var color = scale(value.properties[options.featureKey]);
+			// allow coloring function to be passed in
+			var color = options.color
+				? options.color(value.properties[options.featureKey])
+				: scale(value.properties[options.featureKey]);
 
 			ctxShadow.fillStyle = color;
 			ctxShadow.strokeStyle = color;
