@@ -10,3 +10,9 @@
         maxColor: '#000',
         highlightColor: '#173368'
     });
+
+# real world examples
+
+http://www.bostonglobe.com/2013/09/26/votes-for-grabs/eGRbWgFVwt2ipuEn9Wos5J/story.html
+
+http://www.bostonglobe.com/2013/09/20/campaign-donations-block-block/YF8Rn3diG8rNAqLJW8fRPJ/story.html
